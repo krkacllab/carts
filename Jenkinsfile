@@ -58,6 +58,26 @@ pipeline {
       }
     }
     stage('Deploy to dev namespace') {
+      stage('DT Deploy Event') {
+        when {
+          expression {
+            return env.BRANCH_NAME ==~ 'release/.*' || env.BRANCH_NAME ==~'master'
+        }
+      }
+        steps {
+          container("curl") {
+            script {
+              def status = pushDynatraceDeploymentEvent (
+                tagRule : tagMatchRules,
+                customProperties : [
+                  [key: 'Jenkins Build Number', value: "${env.BUILD_ID}"],
+                  [key: 'Git commit', value: "${env.GIT_COMMIT}"]
+                ]
+              )
+            }
+          }
+        }
+      }
       when {
         expression {
           return env.BRANCH_NAME ==~ 'release/.*' || env.BRANCH_NAME ==~'master'
